@@ -1,13 +1,14 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/christianhturner/go-claude/pkg/db"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -39,17 +40,31 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig, initDB)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-claude.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/.go-claude/config.json)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func initDB() {
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
+
+	configDir := filepath.Join(home, ".config", "go-claude")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		cobra.CheckErr(err)
+	}
+	db.InitDatabase(configDir)
+}
+
+func initLogger() {
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -62,10 +77,20 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
+		configDir := filepath.Join(home, ".config", "go-claude")
+		if err := os.MkdirAll(configDir, 0755); err != nil {
+			cobra.CheckErr(err)
+		}
+		configName := "config"
+		configType := "json"
+		// configPath := filepath.Join(configDir, configName+"."+configType)
+
 		// Search config in home directory with name ".go-claude" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".go-claude")
+		viper.AddConfigPath(configDir)
+		viper.SetConfigName(configName)
+		viper.SetConfigType(configType)
+		viper.SafeWriteConfig()
+
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

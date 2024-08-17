@@ -61,7 +61,15 @@ func initDB() {
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		cobra.CheckErr(err)
 	}
-	db.InitDatabase(configDir)
+	dbPath := filepath.Join(configDir, "data.db")
+	_, err = os.Stat(dbPath)
+	if os.IsNotExist(err) {
+		_, err := os.Create(dbPath)
+		if err != nil {
+			fmt.Printf("failed to create file %v", err)
+		}
+	}
+	db.InitDatabase(dbPath)
 }
 
 func initLogger() {

@@ -33,14 +33,14 @@ func InitDatabase(dbPath string) error {
 
 	_, err = db.ExecContext(
 		context.Background(),
-		`CREATE TABLE IF NOT EXISTS messages(
-        id INTEGER PRIMARY KEY AUTOINCREMENT
-        conversation_id INTEGER
-        role TEXT CHECK(role IN ('user', 'assistant')),
-        content TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-        )`,
+		`CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER,
+    role TEXT CHECK(role IN ('user', 'assistant')),
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+)`,
 	)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func InitDatabase(dbPath string) error {
 
 	_, err = db.ExecContext(
 		context.Background(),
-		`CREATE TANBLE IFOT EXISTS conversation_options(
+		`CREATE TABLE IF NOT EXISTS conversation_options(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         conversation_id INTEGER,
         option_name TEXT,

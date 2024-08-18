@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/christianhturner/go-claude/pkg/log"
+
 	_ "modernc.org/sqlite"
 )
-
-// https://practicalgobook.net/posts/go-sqlite-no-cgo/
 
 var db *sql.DB
 
@@ -18,7 +18,31 @@ func InitDatabase(dbPath string) error {
 		return err
 	}
 
-	_, err = db.ExecContext(
+	err = createConversationsTable()
+	if err != nil {
+		return err
+	}
+
+	err = createMessagesTable()
+	if err != nil {
+		return err
+	}
+
+	err = createConversationOptionsTable()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Close() {
+	err := db.Close()
+	log.WarnError(err, "Error closing database")
+}
+
+func createConversationsTable() error {
+	_, err := db.ExecContext(
 		context.Background(),
 		`CREATE TABLE IF NOT EXISTS conversations(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,11 +51,12 @@ func InitDatabase(dbPath string) error {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
 	)
-	if err != nil {
-		return err
-	}
+	log.LogError(err, "Failed to create conversations table")
+	return err
+}
 
-	_, err = db.ExecContext(
+func createMessagesTable() error {
+	_, err := db.ExecContext(
 		context.Background(),
 		`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,11 +67,12 @@ func InitDatabase(dbPath string) error {
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 )`,
 	)
-	if err != nil {
-		return err
-	}
+	log.LogError(err, "Failed to create messages table")
+	return err
+}
 
-	_, err = db.ExecContext(
+func createConversationOptionsTable() error {
+	_, err := db.ExecContext(
 		context.Background(),
 		`CREATE TABLE IF NOT EXISTS conversation_options(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,9 +82,6 @@ func InitDatabase(dbPath string) error {
         FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
         )`,
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	log.LogError(err, "Failed to create conversation options table")
+	return err
 }

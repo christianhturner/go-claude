@@ -43,8 +43,7 @@ claude
 ├── export
 │   ├── conversations
 │   └── template
-├── import
-└── version
+└── import
 ```
 
 For detailed information on each command and its flags, please refer to the [Command Reference](https://github.com/christianhturner/go-claude/tree/mainline/docs/command-reference.md).

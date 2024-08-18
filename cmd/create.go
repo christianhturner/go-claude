@@ -63,7 +63,6 @@ func init() {
 }
 
 func runCreate() error {
-	var err error
 	term := terminal.New()
 	userSelect, err := term.PromptConfirm("Would you like to give your conversation a name?")
 	log.LogError(err, "Error making a selection at runCreate.")

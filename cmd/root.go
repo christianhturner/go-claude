@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 Christian Turner <ch.turner94@gmail.com | github.com/christianhturner>
 */
 package cmd
 
@@ -9,11 +9,17 @@ import (
 	"path/filepath"
 
 	"github.com/christianhturner/go-claude/pkg/db"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	log     *zap.SugaredLogger
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -40,7 +46,7 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, initDB)
+	cobra.OnInitialize(initConfig, initLogger, initDB)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -73,6 +79,48 @@ func initDB() {
 }
 
 func initLogger() {
+	logger, err := initZap()
+	if err != nil {
+		fmt.Printf("Failed to initialize logger: %v\n", err)
+		os.Exit(1)
+	}
+	log = logger.Sugar()
+	defer log.Sync()
+}
+
+func initZap() (*zap.Logger, error) {
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
+	configDir := filepath.Join(home, ".config", "go-claude")
+	logFile := filepath.Join(configDir, "go-claude.log")
+
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Errorf("failed to open log file: %w", err)
+	}
+
+	logLevel := viper.GetString("log_level")
+	level, err := zapcore.ParseLevel(logLevel)
+	if err != nil {
+		level = zapcore.InfoLevel
+	}
+
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.ISO8601TimeEncoder
+	fileEncoder := zapcore.NewJSONEncoder(config)
+	consoleEncoder := zapcore.NewConsoleEncoder(config)
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(fileEncoder, zapcore.AddSync(f), level),
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
+	)
+
+	logger := zap.New(core)
+	return logger, nil
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -107,4 +155,9 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("Config file changed:", e.Name)
+	})
+	viper.WatchConfig()
 }

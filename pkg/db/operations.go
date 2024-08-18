@@ -12,6 +12,8 @@ package db
 // SetGlobalOption: Sets or updates a global option (using conversation_id 0).
 // GetGlobalOptions: Retrieves all global options.
 // GetConversation: Retrieves a specific conversation by ID.
+// UpdateConversationTitle: Updates the title of a conversation.
+// BeginTransaction: Starts a new database transaction for more complex operations.
 
 import (
 	"context"
@@ -185,6 +187,33 @@ func UpdateConversationTitle(conversationID int64, newTitle string) error {
 }
 
 // BeginTransaction starts a new database transaction
+// Examples of use:
+// // Start a new transaction
+// tx, err := db.BeginTransaction()
+//
+//	if err != nil {
+//	    // Handle error
+//	    return err
+//	}
+//
+// // Defer a rollback in case anything fails
+// defer tx.Rollback()
+//
+// // Perform your database operations using the transaction
+// // Instead of db.Exec or db.Query, use tx.Exec or tx.Query
+//
+// // If all operations are successful, commit the transaction
+// err = tx.Commit()
+//
+//	if err != nil {
+//	    // Handle commit error
+//	    return err
+//	}
+//	Example use case:
+//
+// You want to create a new conversation and immediately add a message to it.
+// IN this instance, you want these operations to be atomic (i.e., both succeed
+// or both fail.)
 func BeginTransaction() (*sql.Tx, error) {
 	return db.BeginTx(context.Background(), nil)
 }

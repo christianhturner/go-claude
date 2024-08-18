@@ -64,7 +64,8 @@ func sessionInit() {
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-stopChan
-		log.Info("\nShutting Down...")
+		fmt.Println("\nShutting Down...")
+		log.Debug("\nShutting Down...")
 		db.Close()
 		os.Exit(0)
 	}()

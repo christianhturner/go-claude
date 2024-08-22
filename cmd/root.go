@@ -12,6 +12,7 @@ import (
 
 	"github.com/christianhturner/go-claude/pkg/db"
 	"github.com/christianhturner/go-claude/pkg/log"
+	"github.com/christianhturner/go-claude/pkg/terminal"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -105,13 +106,18 @@ func initConfig() {
 
 		configName := "config"
 		configType := "json"
-		// configPath := filepath.Join(configDir, configName+"."+configType)
+		configPath := filepath.Join(configDir, configName+"."+configType)
 
 		// Search config in home directory with name ".go-claude" (without extension).
 		viper.AddConfigPath(configDir)
 		viper.SetConfigName(configName)
 		viper.SetConfigType(configType)
-		viper.SafeWriteConfig()
+
+		_, err = os.Stat(configPath)
+		if !os.IsExist(err) {
+			viper.SafeWriteConfig()
+			SetDefaults()
+		}
 
 	}
 
@@ -129,4 +135,14 @@ func initConfig() {
 		fmt.Printf("Config file changed", e.Name)
 	})
 	viper.WatchConfig()
+
+	checkApiKey := viper.IsSet("Anthropic_API_Key")
+	if checkApiKey == false {
+		term := terminal.New()
+		userInput, err := term.Prompt("Please provide your Anthroipic API Key:\n")
+		if err != nil {
+			fmt.Errorf("Error requesting user input for API key: %v", err)
+		}
+		viper.Set("Anthropic_API_Key", userInput)
+	}
 }

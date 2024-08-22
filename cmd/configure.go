@@ -1,6 +1,5 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -8,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // configureCmd represents the configure command
@@ -37,4 +37,15 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// configureCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+// func setAPIKey(apiKey string) error {
+// }
+
+func SetDefaults() {
+	checkApiKey := viper.IsSet("Anthropic_API_Key")
+	if checkApiKey == false {
+		viper.SetDefault("Anthropic_API_Key", "")
+	}
+	viper.SetDefault("log_level", "info")
 }

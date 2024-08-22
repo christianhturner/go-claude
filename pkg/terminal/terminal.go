@@ -43,21 +43,21 @@ func GetWidthAndHeight() (int, int) {
 	cmd.Stdin = os.Stdin
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal(err)
+		log.FatalError(err, "Error occured at GetWidthAndHeight; out, err: err returned a value")
 	}
 
 	s := string(out)
 	s = strings.TrimSpace(s)
 	sArr := strings.Split(s, " ")
 
-	heigth, err := strconv.Atoi(sArr[0])
+	height, err := strconv.Atoi(sArr[0])
 	if err != nil {
-		log.Fatal(err)
+		log.FatalError(err, "Error occured at GetWidthAndHeight; height, err: returned a value")
 	}
 
 	width, err := strconv.Atoi(sArr[1])
 	if err != nil {
-		log.Fatal(err)
+		log.FatalError(err, "Error occurred at GetWidthAndHeight; width, err: returned a value")
 	}
-	return width, heigth
+	return width, height
 }

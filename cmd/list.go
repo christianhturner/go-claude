@@ -49,17 +49,19 @@ func runList() error {
 		log.FatalError(err, "Error listing conversations.")
 	}
 
-	width, _ := terminal.GetWidthAndHeight()
+	preReducedWdith, _ := terminal.GetWidthAndHeight()
 
+	width := preReducedWdith
 	// Define fixed widths
 	idWidth := 5
 	createdWidth := 19
 	updatedWidth := 19
 	minTitleWidth := 20
-	separatorWidth := 3 // For " | "
+	separatorWidth := 3    // For " | "
+	endSeparatorWidth := 2 // For "| " or " |"
 
 	// Calculate title width
-	titleWidth := width - idWidth - updatedWidth - separatorWidth*3
+	titleWidth := width - idWidth - updatedWidth - createdWidth - separatorWidth*3 - endSeparatorWidth*2
 	showCreated := true
 
 	if titleWidth < minTitleWidth+createdWidth {
@@ -69,19 +71,21 @@ func runList() error {
 	}
 
 	// Print headers
-	idHeader := centerString("ID", idWidth)
-	titleHeader := centerString("Title", titleWidth)
+	// idHeader := centerString("ID", idWidth)
+	// titleHeader := centerString("Title", titleWidth)
+	idHeader := runewidth.FillLeft("ID", idWidth)
+	titleHeader := runewidth.FillRight("Title", titleWidth)
 	createdHeader := centerString("Created", createdWidth)
 	updatedHeader := centerString("Updated", updatedWidth)
 
 	if showCreated {
-		fmt.Printf("\n%s | %s | %s | %s\n", idHeader, titleHeader, createdHeader, updatedHeader)
+		fmt.Printf("\n| %s | %s | %s | %s |\n", idHeader, titleHeader, createdHeader, updatedHeader)
 	} else {
-		fmt.Printf("\n%s | %s | %s\n", idHeader, titleHeader, updatedHeader)
+		fmt.Printf("\n| %s | %s | %s |\n", idHeader, titleHeader, updatedHeader)
 	}
 
 	// Print separator line
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(strings.Repeat("_", width))
 
 	// Print conversations
 	for _, c := range conv {
@@ -91,9 +95,9 @@ func runList() error {
 		updated := c.UpdatedAt.Format("2006-01-02 15:04:05")
 
 		if showCreated {
-			fmt.Printf("%s | %s | %s | %s\n", id, title, created, updated)
+			fmt.Printf("| %s | %s | %s | %s |\n", id, title, created, updated)
 		} else {
-			fmt.Printf("%s | %s | %s\n", id, title, updated)
+			fmt.Printf("| %s | %s | %s |\n", id, title, updated)
 		}
 	}
 

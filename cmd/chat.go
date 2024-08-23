@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/christianhturner/go-claude/pkg/claude"
-	"github.com/christianhturner/go-claude/pkg/db"
-	"github.com/christianhturner/go-claude/pkg/log"
-	"github.com/christianhturner/go-claude/pkg/terminal"
+	"github.com/christianhturner/go-claude/claude"
+	"github.com/christianhturner/go-claude/db"
+	"github.com/christianhturner/go-claude/logger"
+	"github.com/christianhturner/go-claude/terminal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -53,7 +53,7 @@ func runChat(message, conversationId string) error {
 		fmt.Println("\n")
 		conv, err := db.ListConversations()
 		if err != nil {
-			log.PanicError(err, "Error Listing Conversations")
+			logger.PanicError(err, "Error Listing Conversations")
 		}
 		var messageIdOptions []string
 		for _, convOptions := range conv {
@@ -68,16 +68,16 @@ func runChat(message, conversationId string) error {
 	} else {
 		idInt, err := strconv.Atoi(conversationId)
 		if err != nil {
-			log.FatalError(err, "Please Provide a number for the messageID")
+			logger.FatalError(err, "Please Provide a number for the messageID")
 		}
 		convID = int64(idInt + 1)
 	}
 
 	messages, err := db.GetMessages(convID)
 	if err != nil {
-		log.FatalError(err, "Error getting messages with Id supplied")
+		logger.FatalError(err, "Error getting messages with Id supplied")
 	}
-	log.Info("\n Messages: \n", messages)
+	logger.Info("\n Messages: \n", messages)
 	var historicMessages []claude.RequestMessages
 	for _, historicMessage := range messages {
 		claudeMessage := claude.RequestMessages{
@@ -90,7 +90,7 @@ func runChat(message, conversationId string) error {
 	if message == "" {
 		input, err = terminal.New().Prompt("Start message to Claude: \n")
 		if err != nil {
-			log.FatalError(err, "Error getting prompt")
+			logger.FatalError(err, "Error getting prompt")
 		}
 	} else {
 		input = message
@@ -111,16 +111,16 @@ func runChat(message, conversationId string) error {
 	ctx := context.Background()
 	res, err := c.CreateMessages(ctx, m)
 	if err != nil {
-		log.PanicError(err, "Panic on message")
+		logger.PanicError(err, "Panic on message")
 	}
 	fmt.Println(res.Content[0].Text)
 	db.AddMessage(convID, claude.MessageRoleUser, userMessage.Content)
 	db.AddMessage(convID, claude.MessageRoleAssistant, res.Content[0].Text)
 	checkUpdate, err := db.GetConversation(convID)
 	if err != nil {
-		log.PanicError(err, "Error with getting conversation")
+		logger.PanicError(err, "Error with getting conversation")
 	}
-	log.Info("\nUpdated Message:\n", checkUpdate)
+	logger.Info("\nUpdated Message:\n", checkUpdate)
 
 	return nil
 }

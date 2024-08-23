@@ -4,9 +4,9 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/christianhturner/go-claude/pkg/db"
-	"github.com/christianhturner/go-claude/pkg/log"
-	"github.com/christianhturner/go-claude/pkg/terminal"
+	"github.com/christianhturner/go-claude/db"
+	"github.com/christianhturner/go-claude/logger"
+	"github.com/christianhturner/go-claude/terminal"
 	"github.com/spf13/cobra"
 )
 
@@ -27,20 +27,20 @@ to quickly create a Cobra application.`,
 			if conversationTitle == "none" {
 				id, err := db.CreateConversation("")
 				if err != nil {
-					log.FatalError(err, "Error creating conversation with no title at go-claude create --title \"title\"")
+					logger.FatalError(err, "Error creating conversation with no title at go-claude create --title \"title\"")
 				}
-				log.Debug("Created a conversation with no name. Id: ", id)
+				logger.Debug("Created a conversation with no name. Id: ", id)
 			} else {
 				id, err := db.CreateConversation(conversationTitle)
 				if err != nil {
-					log.FatalError(err, "Error creating conversation with title")
+					logger.FatalError(err, "Error creating conversation with title")
 				}
-				log.Debug("Created conversation: \nId: ", id, ": Title", conversationTitle)
+				logger.Debug("Created conversation: \nId: ", id, ": Title", conversationTitle)
 			}
 		} else {
 			err := runCreate()
 			if err != nil {
-				log.FatalError(err, "Error executing runCreate")
+				logger.FatalError(err, "Error executing runCreate")
 			}
 		}
 	},
@@ -65,18 +65,18 @@ func init() {
 func runCreate() error {
 	term := terminal.New()
 	userSelect, err := term.PromptConfirm("Would you like to give your conversation a name?")
-	log.LogError(err, "Error making a selection at runCreate.")
+	logger.LogError(err, "Error making a selection at runCreate.")
 	switch userSelect {
 	case true:
 		input, err := term.Prompt("Please provide a name for your conversation:")
-		log.LogError(err, "Error inputting name at runCreate")
+		logger.LogError(err, "Error inputting name at runCreate")
 		id, err := db.CreateConversation(input)
-		log.FatalError(err, "Error creating conversation in database at runCreate")
-		log.Debug("Created a conversation:\nId:", id, ": Title: ", input)
+		logger.FatalError(err, "Error creating conversation in database at runCreate")
+		logger.Debug("Created a conversation:\nId:", id, ": Title: ", input)
 	case false:
 		id, err := db.CreateConversation("")
-		log.FatalError(err, "Error creating conversation with no title at runCreate")
-		log.Debug("Created a conversation with no name. Id: ", id)
+		logger.FatalError(err, "Error creating conversation with no title at runCreate")
+		logger.Debug("Created a conversation with no name. Id: ", id)
 	}
 	return nil
 }

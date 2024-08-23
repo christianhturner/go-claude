@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/christianhturner/go-claude/pkg/log"
+	"github.com/christianhturner/go-claude/logger"
 
 	_ "modernc.org/sqlite"
 )
@@ -38,7 +38,7 @@ func InitDatabase(dbPath string) error {
 
 func Close() {
 	err := db.Close()
-	log.WarnError(err, "Error closing database")
+	logger.WarnError(err, "Error closing database")
 }
 
 func createConversationsTable() error {
@@ -51,7 +51,7 @@ func createConversationsTable() error {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
 	)
-	log.LogError(err, "Failed to create conversations table")
+	logger.LogError(err, "Failed to create conversations table")
 	return err
 }
 
@@ -67,7 +67,7 @@ func createMessagesTable() error {
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 )`,
 	)
-	log.LogError(err, "Failed to create messages table")
+	logger.LogError(err, "Failed to create messages table")
 	return err
 }
 
@@ -82,6 +82,6 @@ func createConversationOptionsTable() error {
         FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
         )`,
 	)
-	log.LogError(err, "Failed to create conversation options table")
+	logger.LogError(err, "Failed to create conversation options table")
 	return err
 }

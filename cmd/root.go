@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/christianhturner/go-claude/pkg/db"
-	"github.com/christianhturner/go-claude/pkg/log"
-	"github.com/christianhturner/go-claude/pkg/terminal"
+	"github.com/christianhturner/go-claude/db"
+	"github.com/christianhturner/go-claude/logger"
+	"github.com/christianhturner/go-claude/terminal"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,7 +48,7 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, log.InitLogger, initDB, sessionInit)
+	cobra.OnInitialize(initConfig, logger.InitLogger, initDB, sessionInit)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -66,7 +66,7 @@ func sessionInit() {
 	go func() {
 		<-stopChan
 		fmt.Println("\nShutting Down...")
-		log.Debug("\nShutting Down...")
+		logger.Debug("\nShutting Down...")
 		db.Close()
 		os.Exit(0)
 	}()
@@ -74,20 +74,20 @@ func sessionInit() {
 
 func initDB() {
 	home, err := os.UserHomeDir()
-	log.FatalError(err, "Failed to get user home directory")
+	logger.FatalError(err, "Failed to get user home directory")
 
 	configDir := filepath.Join(home, ".config", "go-claude")
 	err = os.MkdirAll(configDir, 0755)
-	log.FatalError(err, "Failed to create config directory")
+	logger.FatalError(err, "Failed to create config directory")
 
 	dbPath := filepath.Join(configDir, "data.db")
 	_, err = os.Stat(dbPath)
 	if os.IsNotExist(err) {
 		_, err := os.Create(dbPath)
-		log.LogError(err, "Failed to create database file")
+		logger.LogError(err, "Failed to create database file")
 	}
 	err = db.InitDatabase(dbPath)
-	log.FatalError(err, "Failed to initialize database")
+	logger.FatalError(err, "Failed to initialize database")
 }
 
 // initConfig reads in config file and ENV variables if set.

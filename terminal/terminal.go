@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/christianhturner/go-claude/pkg/log"
+	"github.com/christianhturner/go-claude/logger"
 )
 
 type Terminal struct {
@@ -43,7 +43,7 @@ func GetWidthAndHeight() (int, int) {
 	cmd.Stdin = os.Stdin
 	out, err := cmd.Output()
 	if err != nil {
-		log.FatalError(err, "Error occured at GetWidthAndHeight; out, err: err returned a value")
+		logger.FatalError(err, "Error occured at GetWidthAndHeight; out, err: err returned a value")
 	}
 
 	s := string(out)
@@ -52,12 +52,12 @@ func GetWidthAndHeight() (int, int) {
 
 	height, err := strconv.Atoi(sArr[0])
 	if err != nil {
-		log.FatalError(err, "Error occured at GetWidthAndHeight; height, err: returned a value")
+		logger.FatalError(err, "Error occured at GetWidthAndHeight; height, err: returned a value")
 	}
 
 	width, err := strconv.Atoi(sArr[1])
 	if err != nil {
-		log.FatalError(err, "Error occurred at GetWidthAndHeight; width, err: returned a value")
+		logger.FatalError(err, "Error occurred at GetWidthAndHeight; width, err: returned a value")
 	}
 	return width, height
 }

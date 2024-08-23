@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/christianhturner/go-claude/pkg/db"
-	"github.com/christianhturner/go-claude/pkg/log"
-	"github.com/christianhturner/go-claude/pkg/terminal"
+	"github.com/christianhturner/go-claude/db"
+	"github.com/christianhturner/go-claude/logger"
+	"github.com/christianhturner/go-claude/terminal"
 	"github.com/mattn/go-runewidth"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +46,7 @@ func init() {
 func showConvList() error {
 	conv, err := db.ListConversations()
 	if err != nil {
-		log.FatalError(err, "Error listing conversations.")
+		logger.FatalError(err, "Error listing conversations.")
 	}
 
 	preReducedWdith, _ := terminal.GetWidthAndHeight()

@@ -8,16 +8,16 @@ type RequestBody struct {
 	MetaData      map[string]interface{} `json:"metadata"`       // optional
 	StopSequences []string               `json:"stop_sequences"` // optional
 	Stream        bool                   `json:"stream"`         // optional
-	Temparature   float64                `json:"Temparature"`    // optional
+	Temparature   float64                `json:"temperature"`    // optional
 	TopP          float64                `json:"top_p"`          // optional
 	TopK          float64                `json:"top_k"`
 }
 
 type RequestMessages struct {
-	Role            string      `json:"role"`
-	ContentRaw      interface{} `json:"content"`
-	Content         string      `json:"-"`
-	ContentTypeText []RequestContentTypeText
+	Role            string                   `json:"role"`
+	ContentRaw      interface{}              `json:"content"`
+	Content         string                   `json:"-"`
+	ContentTypeText []RequestContentTypeText `json:"-"`
 	// add option for images
 }
 

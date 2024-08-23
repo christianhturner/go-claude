@@ -11,7 +11,7 @@ import (
 func (c *Client) CreateMessages(ctx context.Context, body RequestBody) (*ResponseBody, error) {
 	reqURL := c.config.BaseURL + c.config.Endpoint
 	reqHeaders := map[string]string{
-		"X-APi-Key":         c.config.ApiKey,
+		"X-Api-Key":         c.config.ApiKey,
 		"Anthropic-Version": c.config.Version,
 		"Content-Type":      contentType,
 	}
@@ -27,6 +27,9 @@ func (c *Client) CreateMessages(ctx context.Context, body RequestBody) (*Respons
 	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, err
+	}
+	for k, v := range reqHeaders {
+		req.Header.Set(k, v)
 	}
 
 	resp, err := c.config.HTTPCLient.Do(req)
@@ -71,8 +74,6 @@ func parseBodyJSON(req RequestBody) ([]byte, error) {
 			}
 			req.Messages[i].ContentRaw = json.RawMessage(raw)
 		}
-
-		// Work on Image processing later
 		// if len(m.ContentTypeImage) > 0 {
 		// 	for j := range m.ContentTypeImage {
 		// 		m.ContentTypeImage[j].Type = "image"

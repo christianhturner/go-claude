@@ -115,8 +115,8 @@ func initConfig() {
 
 		_, err = os.Stat(configPath)
 		if !os.IsExist(err) {
-			viper.SafeWriteConfig()
 			SetDefaults()
+			viper.SafeWriteConfig()
 		}
 
 	}
@@ -126,7 +126,7 @@ func initConfig() {
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
 	if err == nil {
-		fmt.Printf("Using config file: %s", viper.ConfigFileUsed())
+		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
 	} else {
 		fmt.Errorf("Failed to read config file: %w", err)
 	}
@@ -136,13 +136,14 @@ func initConfig() {
 	})
 	viper.WatchConfig()
 
-	checkApiKey := viper.IsSet("Anthropic_API_Key")
-	if checkApiKey == false {
+	checkApiKey := viper.GetString("Anthropic_API_Key")
+	if checkApiKey == "" {
 		term := terminal.New()
 		userInput, err := term.Prompt("Please provide your Anthroipic API Key:\n")
 		if err != nil {
 			fmt.Errorf("Error requesting user input for API key: %v", err)
 		}
 		viper.Set("Anthropic_API_Key", userInput)
+		viper.WriteConfig()
 	}
 }

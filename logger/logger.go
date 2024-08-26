@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -58,9 +57,8 @@ func Fatal(args ...interface{}) {
 }
 
 func initZap() (*zap.Logger, error) {
-	home, err := os.UserHomeDir()
-	cobra.CheckErr(err)
-	configDir := filepath.Join(home, ".config", "go-claude")
+	viper := viper.GetViper()
+	configDir := viper.GetString("data_dir")
 	logFile := filepath.Join(configDir, "go-claude.log")
 
 	if err := os.MkdirAll(configDir, 0755); err != nil {

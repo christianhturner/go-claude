@@ -10,18 +10,13 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/christianhturner/go-claude/config"
 	"github.com/christianhturner/go-claude/db"
 	"github.com/christianhturner/go-claude/logger"
-	"github.com/christianhturner/go-claude/terminal"
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var (
-	cfgFile  string
-	stopChan = make(chan os.Signal, 1)
-)
+var stopChan = make(chan os.Signal, 1)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -48,13 +43,8 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, logger.InitLogger, initDB, sessionInit)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/.go-claude/config.json)")
+	cobra.OnInitialize(config.InitConfig, logger.InitLogger, initDB, sessionInit)
+	config.AddFlags(rootCmd)
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -91,59 +81,59 @@ func initDB() {
 }
 
 // initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		configDir := filepath.Join(home, ".config", "go-claude")
-		err = os.MkdirAll(configDir, 0755)
-		cobra.CheckErr(err)
-
-		configName := "config"
-		configType := "json"
-		configPath := filepath.Join(configDir, configName+"."+configType)
-
-		// Search config in home directory with name ".go-claude" (without extension).
-		viper.AddConfigPath(configDir)
-		viper.SetConfigName(configName)
-		viper.SetConfigType(configType)
-
-		_, err = os.Stat(configPath)
-		if !os.IsExist(err) {
-			SetDefaults()
-			viper.SafeWriteConfig()
-		}
-
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	err := viper.ReadInConfig()
-	if err == nil {
-		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
-	} else {
-		fmt.Errorf("Failed to read config file: %w", err)
-	}
-
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Printf("Config file changed", e.Name)
-	})
-	viper.WatchConfig()
-
-	checkApiKey := viper.GetString("Anthropic_API_Key")
-	if checkApiKey == "" {
-		term := terminal.New()
-		userInput, err := term.Prompt("Please provide your Anthroipic API Key:\n")
-		if err != nil {
-			fmt.Errorf("Error requesting user input for API key: %v", err)
-		}
-		viper.Set("Anthropic_API_Key", userInput)
-		viper.WriteConfig()
-	}
-}
+// func initConfig() {
+// 	if cfgFile != "" {
+// 		// Use config file from the flag.
+// 		viper.SetConfigFile(cfgFile)
+// 	} else {
+// 		// Find home directory.
+// 		home, err := os.UserHomeDir()
+// 		cobra.CheckErr(err)
+//
+// 		configDir := filepath.Join(home, ".config", "go-claude")
+// 		err = os.MkdirAll(configDir, 0755)
+// 		cobra.CheckErr(err)
+//
+// 		configName := "config"
+// 		configType := "json"
+// 		configPath := filepath.Join(configDir, configName+"."+configType)
+//
+// 		// Search config in home directory with name ".go-claude" (without extension).
+// 		viper.AddConfigPath(configDir)
+// 		viper.SetConfigName(configName)
+// 		viper.SetConfigType(configType)
+//
+// 		_, err = os.Stat(configPath)
+// 		if !os.IsExist(err) {
+// 			SetDefaults()
+// 			viper.SafeWriteConfig()
+// 		}
+//
+// 	}
+//
+// 	viper.AutomaticEnv() // read in environment variables that match
+//
+// 	// If a config file is found, read it in.
+// 	err := viper.ReadInConfig()
+// 	if err == nil {
+// 		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
+// 	} else {
+// 		fmt.Errorf("Failed to read config file: %w", err)
+// 	}
+//
+// 	viper.OnConfigChange(func(e fsnotify.Event) {
+// 		fmt.Printf("Config file changed", e.Name)
+// 	})
+// 	viper.WatchConfig()
+//
+// 	checkApiKey := viper.GetString("Anthropic_API_Key")
+// 	if checkApiKey == "" {
+// 		term := terminal.New()
+// 		userInput, err := term.Prompt("Please provide your Anthroipic API Key:\n")
+// 		if err != nil {
+// 			fmt.Errorf("Error requesting user input for API key: %v", err)
+// 		}
+// 		viper.Set("Anthropic_API_Key", userInput)
+// 		viper.WriteConfig()
+// 	}
+// }

@@ -6,8 +6,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/christianhturner/go-claude/config"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // configureCmd represents the configure command
@@ -21,12 +21,19 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("configure called")
+		if cmd.Flag("defaults").Changed {
+			config.ResetToDefaults()
+			fmt.Println("configuration reset to defaults")
+		} else {
+			config.UpdateConfig(cmd)
+			fmt.Println("Configuration file updated")
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(configureCmd)
+	configureCmd.Flags().Bool("defaults", false, "Reset configuration to default values.")
 
 	// Here you will define your flags and configuration settings.
 
@@ -42,10 +49,10 @@ func init() {
 // func setAPIKey(apiKey string) error {
 // }
 
-func SetDefaults() {
-	checkApiKey := viper.IsSet("Anthropic_API_Key")
-	if checkApiKey == false {
-		viper.SetDefault("Anthropic_API_Key", "")
-	}
-	viper.SetDefault("log_level", "info")
-}
+// func SetDefaults() {
+// 	checkApiKey := viper.IsSet("Anthropic_API_Key")
+// 	if checkApiKey == false {
+// 		viper.SetDefault("Anthropic_API_Key", "")
+// 	}
+// 	viper.SetDefault("log_level", "info")
+// }

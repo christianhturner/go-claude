@@ -17,6 +17,22 @@ Go-Claude is a powerful CLI application built on CobraCLI that allows you to int
 - Local storage using SQLite database
 - Full control over your data
 
+## Roadmap to Alpha
+
+- [x] create
+  - [x] conversation
+- [ ] configure
+  - [x] global
+  - [ ] conversation
+- [x] list
+- [ ] chat
+  - [ ] without flags (Need to just add the chat client to chat.)
+  - [ ] with flags (Technically done; Just have to implement the logic to differentiate; defaulted to the interactive)
+- [ ] delete
+- [ ] messages
+- [ ] import
+- [ ] export
+
 ## Installation
 
 [TODO] - Expected at ALPHA

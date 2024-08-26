@@ -4,13 +4,9 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/christianhturner/go-claude/db"
 	"github.com/christianhturner/go-claude/logger"
 	"github.com/christianhturner/go-claude/terminal"
-	"github.com/mattn/go-runewidth"
 	"github.com/spf13/cobra"
 )
 
@@ -49,82 +45,28 @@ func showConvList() error {
 		logger.FatalError(err, "Error listing conversations.")
 	}
 
-	preReducedWdith, _ := terminal.GetWidthAndHeight()
+	term := terminal.New()
 
-	width := preReducedWdith
-	// Define fixed widths
-	idWidth := 5
-	createdWidth := 19
-	updatedWidth := 19
-	minTitleWidth := 20
-	separatorWidth := 3    // For " | "
-	endSeparatorWidth := 2 // For "| " or " |"
+	table := term.NewTable(20)
 
-	// Calculate title width
-	titleWidth := width - idWidth - updatedWidth - createdWidth - separatorWidth*3 - endSeparatorWidth*2
-	showCreated := true
+	idMaxWidth := 7
+	table.AddColumn("ID", "ID", 5, &idMaxWidth, false, 0)
+	table.AddColumn("Title", "Title", 40, nil, true, 0)
+	timeMaxWidth := 19
+	table.AddColumn("Created", "Created", 19, &timeMaxWidth, false, terminal.AlignCenter)
+	table.AddColumn("Updated", "Updated", 19, &timeMaxWidth, false, terminal.AlignCenter)
 
-	if titleWidth < minTitleWidth+createdWidth {
-		// Drop 'Created' column if not enough space
-		titleWidth += createdWidth + separatorWidth
-		showCreated = false
-	}
-
-	// Print headers
-	// idHeader := centerString("ID", idWidth)
-	// titleHeader := centerString("Title", titleWidth)
-	idHeader := runewidth.FillLeft("ID", idWidth)
-	titleHeader := runewidth.FillRight("Title", titleWidth)
-	createdHeader := centerString("Created", createdWidth)
-	updatedHeader := centerString("Updated", updatedWidth)
-
-	if showCreated {
-		fmt.Printf("\n| %s | %s | %s | %s |\n", idHeader, titleHeader, createdHeader, updatedHeader)
-	} else {
-		fmt.Printf("\n| %s | %s | %s |\n", idHeader, titleHeader, updatedHeader)
-	}
-
-	// Print separator line
-	fmt.Println(strings.Repeat("_", width))
-
-	// Print conversations
 	for _, c := range conv {
-		id := formatID(int(c.ID), idWidth)
-		title := formatTitle(c.Title, titleWidth)
-		created := c.CreatedAt.Format("2006-01-02 15:04:05")
-		updated := c.UpdatedAt.Format("2006-01-02 15:04:05")
-
-		if showCreated {
-			fmt.Printf("| %s | %s | %s | %s |\n", id, title, created, updated)
-		} else {
-			fmt.Printf("| %s | %s | %s |\n", id, title, updated)
-		}
+		table.AddRow(map[string]interface{}{
+			"ID":        c.ID,
+			"Title":     c.Title,
+			"Something": c.Title,
+			"Created":   c.CreatedAt.Format("2006-01-02 15:04:05"),
+			"Updated":   c.UpdatedAt.Format("2006-01-02 15:04:05"),
+		})
 	}
+
+	table.Render()
 
 	return nil
-}
-
-func centerString(s string, width int) string {
-	sWidth := runewidth.StringWidth(s)
-	if sWidth >= width {
-		return runewidth.Truncate(s, width, "")
-	}
-	leftPad := (width - sWidth) / 2
-	rightPad := width - sWidth - leftPad
-	return strings.Repeat(" ", leftPad) + s + strings.Repeat(" ", rightPad)
-}
-
-func formatID(id int, width int) string {
-	return fmt.Sprintf("%*d", width, id)
-}
-
-func formatTitle(title string, width int) string {
-	if title == "" {
-		title = "[No Title]"
-	}
-	if runewidth.StringWidth(title) <= width {
-		return runewidth.FillRight(title, width)
-	}
-	truncated := runewidth.Truncate(title, width-3, "...")
-	return runewidth.FillRight(truncated, width)
 }

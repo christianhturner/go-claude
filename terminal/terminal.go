@@ -14,6 +14,8 @@ import (
 type Terminal struct {
 	reader *bufio.Reader
 	writer io.Writer
+	width  int
+	height int
 }
 
 type TerminalInterface interface {
@@ -21,12 +23,16 @@ type TerminalInterface interface {
 	PromptPassword(prompt string) (string, error)
 	PromptConfirm(prompt string) (bool, error)
 	PromptSelect(prompt string, options []string) (int, string, error)
+	NewTable(percentage float64) *Table
 }
 
 func New() *Terminal {
+	width, height := GetWidthAndHeight()
 	return &Terminal{
 		reader: bufio.NewReader(os.Stdin),
 		writer: os.Stdout,
+		width:  width,
+		height: height,
 	}
 }
 
@@ -60,4 +66,8 @@ func GetWidthAndHeight() (int, int) {
 		logger.FatalError(err, "Error occurred at GetWidthAndHeight; width, err: returned a value")
 	}
 	return width, height
+}
+
+func (t *Terminal) UpdateDimensions() {
+	t.width, t.height = GetWidthAndHeight()
 }

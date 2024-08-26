@@ -25,9 +25,9 @@ Go-Claude is a powerful CLI application built on CobraCLI that allows you to int
   - [x] global
   - [ ] conversation
 - [x] list
-- [ ] chat
-  - [ ] without flags (Need to just add the chat client to chat.)
-  - [ ] with flags (Technically done; Just have to implement the logic to differentiate; defaulted to the interactive)
+- [x] chat
+  - [x] without flags (Need to just add the chat client to chat.)
+  - [x] with flags (Technically done; Just have to implement the logic to differentiate; defaulted to the interactive)
 - [ ] delete
 - [ ] messages
 - [ ] import

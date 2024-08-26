@@ -6,22 +6,86 @@ import (
 	"strconv"
 
 	"github.com/christianhturner/go-claude/claude"
-	"github.com/christianhturner/go-claude/config"
 	"github.com/christianhturner/go-claude/db"
 	"github.com/christianhturner/go-claude/logger"
 	"github.com/christianhturner/go-claude/terminal"
-	"github.com/spf13/viper"
 )
 
-var (
-	convID    int64
-	model     = viper.GetString(config.ModelKey)
-	MaxTokens = viper.GetInt(config.MaxTokensKey)
-	apiKey    = viper.GetString(config.AnthropicApiKeyKey)
-)
+type MessagePair struct {
+	UserMessage      claude.RequestMessages
+	AssistantMessage claude.RequestMessages
+}
 
-func ChatWithoutFlags(message string) error {
-	// c := claude.NewClient(apiKey)
+func getMessagePairs(history []claude.RequestMessages) []MessagePair {
+	pairs := []MessagePair{}
+	for i := 0; i < len(history); i += 2 {
+		if i+1 < len(history) {
+			pair := MessagePair{
+				UserMessage: claude.RequestMessages{
+					Role:    claude.MessageRoleUser,
+					Content: history[i].Content,
+				},
+				AssistantMessage: claude.RequestMessages{
+					Role:    claude.MessageRoleAssistant,
+					Content: history[i+1].Content,
+				},
+			}
+			pairs = append(pairs, pair)
+		}
+	}
+	return pairs
+}
+
+func PrintMessageHistory(conversationId int64) {
+	history := GetConversationHistory(conversationId)
+	pairs := getMessagePairs(history)
+
+	printHistory, err := terminal.New().PromptConfirm("Would you like to see our conversation?")
+	if err != nil {
+		logger.PanicError(err, "Error prompting for message history.")
+	}
+
+	if !printHistory {
+		return
+	}
+
+	maxPairs := len(pairs)
+	var numPairs int
+
+	for {
+		input, err := terminal.New().Prompt(fmt.Sprintf("How many message pairs would you like to review? (1-%d)", maxPairs))
+		if err != nil {
+			logger.PanicError(err, "Error reading user input.")
+			return
+		}
+		numPairs, err = strconv.Atoi(input)
+		if err != nil || numPairs < 1 || numPairs > maxPairs {
+			fmt.Printf("Please enter a valid number between 1 and %d.\n", maxPairs)
+			continue
+		}
+		break
+	}
+
+	fmt.Println("\nConversation History:")
+	// Change this loop to iterate from the beginning
+	for i := 0; i < numPairs && i < len(pairs); i++ {
+		pair := pairs[i]
+		fmt.Printf("\nUser: %s\n", pair.UserMessage.Content)
+		fmt.Printf("\nClaude: %s\n", pair.AssistantMessage.Content)
+	}
+	// Extra line space
+	fmt.Println("\n")
+}
+
+func PromptUserForMessage() string {
+	input, err := terminal.New().Prompt("User: ")
+	if err != nil {
+		logger.PanicError(err, "Error prompting user for message.")
+	}
+	return input
+}
+
+func PromptUserForConversationId() int64 {
 	conv, err := db.ListConversations()
 	if err != nil {
 		logger.PanicError(err, "Error listing conversations")
@@ -33,44 +97,20 @@ func ChatWithoutFlags(message string) error {
 	selected := terminal.New().PromptOptionsSelect(options)
 	fmt.Printf("Selected: ID=%v, Description=%s\n", selected.ID, selected.Description)
 
-	return nil
+	id, ok := selected.ID.(int64)
+	if !ok {
+		logger.PanicError(err, "Invalid ID type; Expected int64 for conversation ID")
+	}
+
+	return id
 }
 
-func ChatWithConvId(message, conversationId string) error {
-	c := claude.NewClient(apiKey)
-	var input string
-	var err error
-
-	if conversationId == "" {
-		//	showConvList()
-		fmt.Println("\n")
-		conv, err := db.ListConversations()
-		if err != nil {
-			logger.PanicError(err, "Error Listing Conversations")
-		}
-		var messageIdOptions []string
-		for _, convOptions := range conv {
-			messageIdOptions = append(messageIdOptions, convOptions.Title)
-		}
-		id, input, err := terminal.New().PromptSelect("Select a conversation", messageIdOptions)
-		if err != nil {
-			fmt.Errorf("An Error occurred %v", err)
-		}
-		fmt.Printf("User selected %d: %s", id, input)
-		convID = int64(id + 1)
-	} else {
-		idInt, err := strconv.Atoi(conversationId)
-		if err != nil {
-			logger.FatalError(err, "Please Provide a number for the messageID")
-		}
-		convID = int64(idInt + 1)
-	}
-
-	messages, err := db.GetMessages(convID)
+func GetConversationHistory(convId int64) []claude.RequestMessages {
+	messages, err := db.GetMessages(convId)
 	if err != nil {
-		logger.FatalError(err, "Error getting messages with Id supplied")
+		logger.PanicError(err, "Error getting messages from conversation table")
 	}
-	logger.Info("\n Messages: \n", messages)
+
 	var historicMessages []claude.RequestMessages
 	for _, historicMessage := range messages {
 		claudeMessage := claude.RequestMessages{
@@ -79,41 +119,28 @@ func ChatWithConvId(message, conversationId string) error {
 		}
 		historicMessages = append(historicMessages, claudeMessage)
 	}
+	return historicMessages
+}
 
-	if message == "" {
-		input, err = terminal.New().Prompt("Start message to Claude: \n")
-		if err != nil {
-			logger.FatalError(err, "Error getting prompt")
-		}
-	} else {
-		input = message
-	}
+func AppendHistoryToMessageRequest(messageRequest claude.RequestMessages, history []claude.RequestMessages) []claude.RequestMessages {
+	return append(history, messageRequest)
+}
 
-	userMessage := claude.RequestMessages{
+func MessageToRequest(message string) claude.RequestMessages {
+	return claude.RequestMessages{
 		Role:    claude.MessageRoleUser,
-		Content: input,
+		Content: message,
 	}
-	finalMessages := append(historicMessages, userMessage)
+}
 
-	m := claude.RequestBody{
-		Model:     model,
-		MaxTokens: MaxTokens,
-		Messages:  finalMessages,
-	}
+func AddMessageToConversationTable(convId int64, message claude.RequestMessages) {
+	db.AddMessage(convId, message.Role, message.Content)
+}
 
-	ctx := context.Background()
-	res, err := c.CreateMessages(ctx, m)
+func SendMessageToClaude(ctx context.Context, body claude.RequestBody, client claude.Client) *claude.ResponseBody {
+	res, err := client.CreateMessages(ctx, body)
 	if err != nil {
-		logger.PanicError(err, "Panic on message")
+		logger.PanicError(err, "Panic sending message to claude")
 	}
-	fmt.Println(res.Content[0].Text)
-	db.AddMessage(convID, claude.MessageRoleUser, userMessage.Content)
-	db.AddMessage(convID, claude.MessageRoleAssistant, res.Content[0].Text)
-	checkUpdate, err := db.GetConversation(convID)
-	if err != nil {
-		logger.PanicError(err, "Error with getting conversation")
-	}
-	logger.Info("\nUpdated Message:\n", checkUpdate)
-
-	return nil
+	return res
 }

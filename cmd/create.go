@@ -38,7 +38,7 @@ to quickly create a Cobra application.`,
 				logger.Debug("Created conversation: \nId: ", id, ": Title", conversationTitle)
 			}
 		} else {
-			err := runCreate()
+			err := runCreateConversation()
 			if err != nil {
 				logger.FatalError(err, "Error executing runCreate")
 			}
@@ -62,7 +62,7 @@ func init() {
 	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func runCreate() error {
+func runCreateConversation() error {
 	term := terminal.New()
 	userSelect, err := term.PromptConfirm("Would you like to give your conversation a name?")
 	logger.LogError(err, "Error making a selection at runCreate.")

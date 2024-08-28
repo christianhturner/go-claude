@@ -13,13 +13,15 @@ import (
 // configureCmd represents the configure command
 var configureCmd = &cobra.Command{
 	Use:   "configure",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Global configurations for go-claude.",
+	Long: `Cofigure command will direclty configure your gloabl
+    configuration. Any configuration can be set through this command
+    followed by a '--flag' followed by the value you wish to set.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+    This will change the value within the global config file. The
+    default location of this file is ~/.config/go-claude/config.json, 
+    though this location can be changed within the config file and 
+    configure command.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if cmd.Flag("defaults").Changed {
 			config.ResetToDefaults()

@@ -1,0 +1,6 @@
+TODO:
+- Delete run delete on an item even if the ID doesn't match anything. Isn't breaking anything, but not a great user experience.
+- Refactor out the prompts so they can be reused and scoped to prompt largely for the flags, so that the prompt messaging will be consistent throughout the project.
+- Refactor all of the flags into a single place, so we can avoid having duplicate flags throughout the project.
+- We should align on a design with where prompts should live within the project. Each command has a package with it's functions, should prompts be called within these inner portions, or should all prompts occur within the cmd package and we can ensure that any place there might be a prompt we instead now this is a deliniation place as to where a new function should be created, and we can have one function return a value needed for the next, and anything that is expected to be provided from the user should most likely be prompted within the prompt itself.
+- If we want to align with a TUI later we have to ensure that all prompts can be avoided in the event that all of the flags are provided. Or we can avoid the commands all together, but no that all of our internal cmd functions are always free from prompts and line prints that would conflict with a tui interface.

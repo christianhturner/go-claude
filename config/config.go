@@ -30,6 +30,7 @@ var (
 	AnthropicBeta     = ""
 	MaxTokens         = 2000
 	Model             = "claude-3-5-sonnet-20240620"
+	Stream            = true
 	Temperature       float64 // might should be a string in order to support an empty value?
 	TopP              float64 // might should be a string in order to support an empty value?
 	TopK              float64 // might should be a string in order to support an empty value?
@@ -45,12 +46,14 @@ var (
 	AnthripicBetaKey     = "anthropic_beta"
 	MaxTokensKey         = "max_tokens"
 	ModelKey             = "model_key"
+	StreamKey            = "enableHttpStream"
 	TemperatureKey       = "temperature_key"
 	TopPKey              = "top_p"
 	TopKKey              = "top_k"
 )
 
 var ConfigItems = []ConfigItem{
+	{Flag: "stream", ConfigKey: StreamKey, Value: &Stream},
 	{Flag: "max-tokens", ConfigKey: MaxTokensKey, Value: &MaxTokens},
 	{Flag: "data-dir", ConfigKey: DataDirKey, Value: &DataDir},
 	{Flag: "cfg-file", ConfigKey: CfgFileKey, Value: &CfgFile},
@@ -62,6 +65,7 @@ var ConfigItems = []ConfigItem{
 	{Flag: "anthropic-beta", ConfigKey: AnthripicBetaKey, Value: &AnthropicBeta},
 	{Flag: "max-tokens", ConfigKey: MaxTokensKey, Value: &MaxTokens},
 	{Flag: "model", ConfigKey: ModelKey, Value: &Model},
+	{Flag: "stream", ConfigKey: StreamKey, Value: &Stream},
 	{Flag: "temperature", ConfigKey: TemperatureKey, Value: &Temperature},
 	{Flag: "top-p", ConfigKey: TopPKey, Value: &TopP},
 	{Flag: "top-k", ConfigKey: TopKKey, Value: &TopK},
@@ -89,6 +93,8 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().IntVar(&MaxTokens, "max-tokens", MaxTokens, "Specifies the maximum number of tokens for the conversation. (Global)")
 
 	cmd.PersistentFlags().StringVar(&Model, "model", Model, "Specifies the Claude model to use. (Global, Default: claude-3-5-sonnet-20240620, Options: claude-3-5-sonnet, claude-3-sonnet, claude-3-haiku, claude-3-opus)")
+
+	cmd.PersistentFlags().BoolVar(&Stream, "stream", Stream, "Enables Http streaming within the Anthropic Client and provides real-time delivery of message generation. (Global, Default: True)")
 
 	cmd.PersistentFlags().Float64Var(&Temperature, "temperature", Temperature, "Specifies the temperature for response generation. (Global)")
 
@@ -157,6 +163,8 @@ func setDefaults() {
 				viper.SetDefault(item.ConfigKey, *v)
 			case *float64:
 				viper.SetDefault(item.ConfigKey, *v)
+			case *bool:
+				viper.SetDefault(item.ConfigKey, *v)
 			default:
 				// Handle other types or log an error
 				fmt.Printf("Unsupported type for config key: %s\n", item.ConfigKey)
@@ -177,6 +185,8 @@ func ResetToDefaults() {
 			case *int:
 				viper.Set(item.ConfigKey, *v)
 			case *float64:
+				viper.SetDefault(item.ConfigKey, *v)
+			case *bool:
 				viper.SetDefault(item.ConfigKey, *v)
 			}
 		}

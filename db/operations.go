@@ -19,7 +19,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/christianhturner/go-claude/logger"
 )
 
 // Conversation represents a conversation in the database
@@ -108,7 +111,18 @@ func GetConversationOptions(conversationID int64) ([]ConversationOption, error) 
 
 // DeleteConversation deletes a conversation and all its messages and options
 func DeleteConversation(conversationID int64) error {
-	_, err := db.Exec("DELETE FROM conversations WHERE id = ?", conversationID)
+	sqlResult, err := db.Exec("DELETE FROM conversations WHERE id = ?", conversationID)
+	if err != nil {
+		logger.PanicError(err, fmt.Sprintf("Error attempting to Delete Conversation from table.\n%v\n%v", sqlResult, err))
+	}
+	sqlResult, err = db.Exec("DELETE FROM messages WHERE conversation_id = ?", conversationID)
+	if err != nil {
+		logger.PanicError(err, fmt.Sprintf("Error attempting to Delete Conversation from table.\n%v\n%v", sqlResult, err))
+	}
+	sqlResult, err = db.Exec("DELETE FROM conversation_options WHERE conversation_id = ?", conversationID)
+	if err != nil {
+		logger.PanicError(err, fmt.Sprintf("Error attempting to Delete Conversation from table.\n%v\n%v", sqlResult, err))
+	}
 	return err
 }
 

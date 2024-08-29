@@ -4,6 +4,7 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	cliui "github.com/christianhturner/go-claude/cli-ui"
 	"github.com/christianhturner/go-claude/db"
 	"github.com/christianhturner/go-claude/logger"
 	"github.com/christianhturner/go-claude/terminal"
@@ -64,8 +65,7 @@ func init() {
 
 func runCreateConversation() error {
 	term := terminal.New()
-	userSelect, err := term.PromptConfirm("Would you like to give your conversation a name?")
-	logger.LogError(err, "Error making a selection at runCreate.")
+	userSelect := cliui.PromptForBool("Would you like to give your conversation a name?", nil)
 	switch userSelect {
 	case true:
 		input, err := term.Prompt("Please provide a name for your conversation:")

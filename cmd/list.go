@@ -4,29 +4,16 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/christianhturner/go-claude/db"
-	"github.com/christianhturner/go-claude/logger"
-	"github.com/christianhturner/go-claude/terminal"
+	"fmt"
+
+	cliui "github.com/christianhturner/go-claude/cli-ui"
+	"github.com/christianhturner/go-claude/list"
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		showConvList()
-	},
-}
-
 func init() {
 	rootCmd.AddCommand(listCmd)
+	listCmd.AddCommand(listConversationsCmd, listMessagesCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -39,34 +26,43 @@ func init() {
 	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func showConvList() error {
-	conv, err := db.ListConversations()
-	if err != nil {
-		logger.FatalError(err, "Error listing conversations.")
-	}
+// listCmd represents the list command
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "list allows you to list go-claude data.",
+	Long: `list various items by following this command with a supported subcommand. You can
+    list conversations, messages, global configuration, and conversation level configurations.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Please provide a subcommand [conversations, messages, global-configuration, or conversation-configuration]")
+	},
+}
 
-	term := terminal.New()
+// go-claude list conversations
+var listConversationsCmd = &cobra.Command{
+	Use:   "conversations",
+	Short: "List conversations in a table view",
+	Long:  `List conversations into a table view that provides columns including ID, Title, Created, and Last Updated`,
+	Run: func(cmd *cobra.Command, args []string) {
+		cliRunListConversationsFunction(cmd, args)
+	},
+}
 
-	table := term.NewTable(20)
+var listMessagesCmd = &cobra.Command{
+	Use:   "messages",
+	Short: "List messages in a table view",
+	Long:  "List messages in a table view that provides columns which include Id, Role, Content, and Created",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliRunListMessagesFunction(cmd, args)
+	},
+}
 
-	idMaxWidth := 7
-	table.AddColumn("ID", "ID", 5, &idMaxWidth, false, 0)
-	table.AddColumn("Title", "Title", 40, nil, true, 0)
-	timeMaxWidth := 19
-	table.AddColumn("Created", "Created", 19, &timeMaxWidth, false, terminal.AlignCenter)
-	table.AddColumn("Updated", "Updated", 19, &timeMaxWidth, false, terminal.AlignCenter)
+// go-claude
 
-	for _, c := range conv {
-		table.AddRow(map[string]interface{}{
-			"ID":        c.ID,
-			"Title":     c.Title,
-			"Something": c.Title,
-			"Created":   c.CreatedAt.Format("2006-01-02 15:04:05"),
-			"Updated":   c.UpdatedAt.Format("2006-01-02 15:04:05"),
-		})
-	}
+func cliRunListConversationsFunction(cmd *cobra.Command, args []string) {
+	list.ShowConvList()
+}
 
-	table.Render()
-
-	return nil
+func cliRunListMessagesFunction(cmd *cobra.Command, args []string) {
+	conversationId := cliui.PromptForConversationId()
+	list.ShowMessageList(conversationId)
 }

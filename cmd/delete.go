@@ -6,10 +6,10 @@ package cmd
 import (
 	"fmt"
 
+	cliui "github.com/christianhturner/go-claude/cli-ui"
 	"github.com/christianhturner/go-claude/db"
 	"github.com/christianhturner/go-claude/delete"
 	"github.com/christianhturner/go-claude/logger"
-	"github.com/christianhturner/go-claude/terminal"
 	"github.com/spf13/cobra"
 )
 
@@ -34,8 +34,9 @@ var deleteCmd = &cobra.Command{
 	},
 }
 
+// go-claude delete conversation
 var deleteConversation = &cobra.Command{
-	Use:   "conversation",
+	Use:   "conversations",
 	Short: "Delete a converastion from your Claude conversation list.",
 	Long: `From the conversation subcommand you can be provided a prompt if you supply no flags to specify which
     conversation that you wish to delete. Example:
@@ -43,35 +44,7 @@ var deleteConversation = &cobra.Command{
     go-claude delete conversation --id 1 -> Will begin deleting the specified conversation with the Id provided, but will prompt if you're sure.
     go-claude delete conversation --id 1 -y -> This will directly delete conversation ID: 1 (excluding the -y will prompt if you're sure you wish to delete)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		confirm, _ := cmd.Flags().GetBool("yes")
-		if conversationId == 0 {
-			conversationId = delete.PromptForConversationId()
-			delete.DeleteConversation(conversationId)
-		} else {
-			if confirm {
-				delete.DeleteConversation(conversationId)
-			} else {
-				conversations, err := db.ListConversations()
-				var title string
-				for _, conv := range conversations {
-					if conv.ID == conversationId {
-						title = conv.Title
-						break
-					} else {
-						logger.PanicError(err, "ConversationId provided does not match an Id in our database.\nYou can run the command without the --id flag to receive a prompt.")
-					}
-				}
-				userConfirmation, err := terminal.New().PromptConfirm(fmt.Sprintf("Are you sure you want to delete:\nID: %d - %s", conversationId, title))
-				if err != nil {
-					logger.PanicError(err, "Error getting confirmation from user.")
-				}
-				if userConfirmation {
-					delete.DeleteConversation(conversationId)
-				} else {
-					fmt.Println("Cancelling request to delete Conversation.")
-				}
-			}
-		}
+		cliDelteConversation(cmd, args)
 	},
 }
 
@@ -89,4 +62,33 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func cliDelteConversation(cmd *cobra.Command, args []string) {
+	confirm, _ := cmd.Flags().GetBool("yes")
+	if conversationId == 0 {
+		conversationId = cliui.PromptForConversationId()
+		delete.DeleteConversation(conversationId)
+	} else {
+		if confirm {
+			delete.DeleteConversation(conversationId)
+		} else {
+			conversations, err := db.ListConversations()
+			var title string
+			for _, conv := range conversations {
+				if conv.ID == conversationId {
+					title = conv.Title
+					break
+				} else {
+					logger.PanicError(err, "ConversationId provided does not match an Id in our database.\nYou can run the command without the --id flag to receive a prompt.")
+				}
+			}
+			userConfirmation := cliui.PromptForBool("Are you sure you want to delete:\nID: %v - %v", conversationId, title)
+			if userConfirmation {
+				delete.DeleteConversation(conversationId)
+			} else {
+				fmt.Println("Cancelling request to delete Conversation.")
+			}
+		}
+	}
 }

@@ -2,13 +2,18 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"strings"
 
 	"github.com/christianhturner/go-claude/chat"
 	"github.com/christianhturner/go-claude/claude"
+	cliui "github.com/christianhturner/go-claude/cli-ui"
 	"github.com/christianhturner/go-claude/config"
 	"github.com/christianhturner/go-claude/db"
 	"github.com/christianhturner/go-claude/logger"
+	"github.com/christianhturner/go-claude/terminal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -29,6 +34,7 @@ var chatCmd = &cobra.Command{
 		model := viper.GetString(config.ModelKey)
 		MaxTokens := viper.GetInt(config.MaxTokensKey)
 		apiKey := viper.GetString(config.AnthropicApiKeyKey)
+		stream := viper.GetBool(config.StreamKey)
 		c := claude.NewClient(apiKey)
 
 		convs, err := db.ListConversations()
@@ -41,15 +47,22 @@ var chatCmd = &cobra.Command{
 		}
 
 		if conversationId == 0 {
-			conversationId = chat.PromptUserForConversationId()
+			conversationId = cliui.PromptForConversationId()
 		}
 
-		if showHistory {
-			chat.PrintMessageHistory(conversationId)
+		if showHistory && userMessage == "" {
+			promptShowHistory, err := terminal.New().PromptConfirm("Would you like to see our conversation?")
+			if err != nil {
+				logger.PanicError(err, "Error getting user input.")
+			}
+			if promptShowHistory {
+				displayAmount, messagePairs := cliui.PromptHistoricMessagePairs(conversationId)
+				cliui.PresentHistoricMessagePairs(displayAmount, messagePairs)
+			}
 		}
 
 		if userMessage == "" {
-			userMessage = chat.PromptUserForMessage()
+			userMessage = cliui.PromptUserForMessage()
 		}
 
 		history := chat.GetConversationHistory(conversationId)
@@ -58,22 +71,58 @@ var chatCmd = &cobra.Command{
 
 		messages := chat.AppendHistoryToMessageRequest(messageRequest, history)
 
-		requestBody := claude.RequestBody{
-			Model:     model,
-			MaxTokens: MaxTokens,
-			Messages:  messages,
-		}
-
 		ctx := context.Background()
-		response := chat.SendMessageToClaude(ctx, requestBody, *c)
 
-		fmt.Printf("Claude: %s/n", response.Content[0].Text)
+		if stream {
+			requestBody := claude.RequestBody{
+				Model:     model,
+				MaxTokens: MaxTokens,
+				Messages:  messages,
+				Stream:    stream,
+			}
+			stream := chat.StreamMessagesToClaude(ctx, requestBody, *c)
+			var finalMessage claude.RequestMessages
+			finalMessage.Role = claude.MessageRoleAssistant
 
-		chat.AddMessageToConversationTable(conversationId, messageRequest)
-		chat.AddMessageToConversationTable(conversationId, claude.RequestMessages{
-			Role:    claude.MessageRoleAssistant,
-			Content: response.Content[0].Text,
-		})
+			var contentBuilder strings.Builder
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return
+			}
+			defer stream.Close()
+			for {
+				res, err := stream.Recv()
+				if errors.Is(err, io.EOF) {
+					break
+				}
+				if err != nil {
+					logger.PanicError(err, "Error with stream")
+				}
+				fmt.Printf("%s", res.Content[0].Text)
+				contentBuilder.WriteString(res.Content[0].Text)
+			}
+			finalMessage.Content = contentBuilder.String()
+			chat.AddMessageToConversationTable(conversationId, messageRequest)
+			chat.AddMessageToConversationTable(conversationId, finalMessage)
+
+		} else {
+
+			requestBody := claude.RequestBody{
+				Model:     model,
+				MaxTokens: MaxTokens,
+				Messages:  messages,
+			}
+
+			response := chat.SendMessageToClaude(ctx, requestBody, *c)
+
+			fmt.Printf("Claude: %s/n", response.Content[0].Text)
+
+			chat.AddMessageToConversationTable(conversationId, messageRequest)
+			chat.AddMessageToConversationTable(conversationId, claude.RequestMessages{
+				Role:    claude.MessageRoleAssistant,
+				Content: response.Content[0].Text,
+			})
+		}
 	},
 }
 

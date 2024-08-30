@@ -20,6 +20,7 @@ func configureCmdFlags() {
 }
 
 func createCmdFlags() {
+	createCmd.Flags().StringVarP(&conversationTitle, "title", "t", "", "Title for conversation.")
 }
 
 func deleteCmdFlags() {

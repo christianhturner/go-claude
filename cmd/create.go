@@ -14,13 +14,10 @@ import (
 // createCmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Use this command to create new conversations.",
+	Long: `Use this command to create new conversations. Most likely subcommands will be
+    added, and create will not work without the use of the additional subcommands. Currently,
+    no other items to be created, so leaving this as is.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if cmd.Flags().Changed("title") {
 			if conversationTitle == "none" {
@@ -47,8 +44,6 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(createCmd)
-
-	createCmd.Flags().StringVarP(&conversationTitle, "title", "t", "", "Title for conversation.")
 
 	// Here you will define your flags and configuration settings.
 

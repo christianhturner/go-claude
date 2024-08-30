@@ -100,6 +100,28 @@ that I'm using unicode encoding, for additional icons. If your terminal does not
 ASCII please report those findings. I can always go back and try to add additional implementations to try to
 achieve better support.
 
+## Adding Completions
+
+### OH MY ZSH
+
+Run the following:
+
+```
+go-claude completions zsh > ~/.oh-my-zsh/custom/go-claude_completions.zsh
+```
+
+For now, you'll need to edit this file, and delete the top line, as it will include a println statement that will
+break the completion. Use you're editor, go to the file and delete that top line.
+Then:
+
+```
+chmod +x ~/.oh-my-zsh/custom/go-claude_completions.zsh
+echo 'source $ZSH_CUSTOM/go-claude_completions.zsh' >> ~/.zshrc
+source ~/.zshrc
+```
+
+More Coming Soon...
+
 ## Usage
 
 Go-Claude offers a variety of commands to interact with the Claude API:

@@ -11,8 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var conversationTitle string
-
 // createCmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create",
@@ -50,7 +48,7 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	createCmd.Flags().StringVar(&conversationTitle, "title", "", "Title for conversation.")
+	createCmd.Flags().StringVarP(&conversationTitle, "title", "t", "", "Title for conversation.")
 
 	// Here you will define your flags and configuration settings.
 

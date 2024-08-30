@@ -41,6 +41,70 @@ type Option struct {
 	Description string
 }
 
+func (t *Terminal) PromptMultipleOptionsSelect(options map[interface{}]string) []Option {
+	optionSlice := make([]Option, 0, len(options))
+	for id, desc := range options {
+		optionSlice = append(optionSlice, Option{ID: id, Description: desc})
+	}
+
+	selectedIndex := 0
+	selectedOptions := make(map[int]bool)
+	optionsCount := len(optionSlice)
+
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		logger.PanicError(err, "Panic occurred registering terminal old state.")
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	for {
+		clearScreen()
+		for i, opt := range optionSlice {
+			prefix := "  "
+			if i == selectedIndex {
+				prefix = "> "
+			}
+
+			checkbox := "[ ]"
+			if selectedOptions[i] {
+				checkbox = "[x]"
+			}
+
+			fmt.Fprintf(t.writer, "%s%s %s\r\n", prefix, checkbox, opt.Description)
+		}
+		fmt.Fprint(t.writer, "\r\nUse h (left), j (down), k (up), l (right) to navigate; Enter to toggle; c to confirm; q to quit\r\n")
+
+		b := make([]byte, 3)
+		os.Stdin.Read(b)
+
+		switch {
+		case b[0] == 27 && b[1] == 91: // Arrow keys
+			switch b[2] {
+			case 65, 68: // Up arrow or Left arrow
+				selectedIndex = (selectedIndex - 1 + optionsCount) % optionsCount
+			case 66, 67: // Down arrow or Right arrow
+				selectedIndex = (selectedIndex + 1) % optionsCount
+			}
+		case b[0] == 'h' || b[0] == 'H' || b[0] == 'k' || b[0] == 'K':
+			selectedIndex = (selectedIndex - 1 + optionsCount) % optionsCount
+		case b[0] == 'l' || b[0] == 'L' || b[0] == 'j' || b[0] == 'J':
+			selectedIndex = (selectedIndex + 1) % optionsCount
+		case b[0] == 13: // Enter
+			selectedOptions[selectedIndex] = !selectedOptions[selectedIndex]
+		case b[0] == 'c' || b[0] == 'C': // 'c' or 'C' to confirm
+			result := make([]Option, 0)
+			for i, opt := range optionSlice {
+				if selectedOptions[i] {
+					result = append(result, opt)
+				}
+			}
+			return result
+		case b[0] == 'q' || b[0] == 'Q':
+			return []Option{} // Return empty slice if user quits
+		}
+	}
+}
+
 func (t *Terminal) PromptOptionsSelect(options map[interface{}]string) Option {
 	optionSlice := make([]Option, 0, len(options))
 	for id, desc := range options {

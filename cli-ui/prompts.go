@@ -52,6 +52,29 @@ func PromptForBool(format string, a ...any) bool {
 	return userConfirmation
 }
 
+func PromptMultiSelectMessageIds(conversationId int64) []int64 {
+	messages, err := db.GetMessages(conversationId)
+	if err != nil {
+		logger.PanicError(err, "Error listing conversations")
+	}
+	options := make(map[interface{}]string)
+	for _, messOptions := range messages {
+		options[messOptions.ID] = messOptions.Content
+	}
+	selectedOptions := terminal.New().PromptMultipleOptionsSelect(options)
+	var messageIds []int64
+	fmt.Println("\nSelected:\n")
+	for _, messIds := range selectedOptions {
+		id, ok := messIds.ID.(int64)
+		if !ok {
+			logger.PanicError(err, "ID is not int64")
+		}
+		fmt.Printf("\n%d - %s\n", id, messIds.Description)
+		messageIds = append(messageIds, id)
+	}
+	return messageIds
+}
+
 func PromptForConversationId() int64 {
 	conv, err := db.ListConversations()
 	if err != nil {

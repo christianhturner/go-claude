@@ -18,12 +18,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	userMessage    string
-	conversationId int64
-	showHistory    bool
-)
-
 // chatCmd represents the chat command
 var chatCmd = &cobra.Command{
 	Use:   "chat",
@@ -128,7 +122,5 @@ var chatCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(chatCmd)
-	chatCmd.Flags().StringVar(&userMessage, "message", "", "Send a message to Claude")
-	chatCmd.Flags().Int64Var(&conversationId, "id", 0, "Specify a Conversation by it's ID")
-	chatCmd.Flags().BoolVarP(&showHistory, "history", "H", true, "Specify whether you want to see your last messages")
+	chatCmdFlags()
 }

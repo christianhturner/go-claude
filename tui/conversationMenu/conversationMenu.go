@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/christianhturner/go-claude/db"
-	"github.com/christianhturner/go-claude/go_claude_list"
+	go_claude_list "github.com/christianhturner/go-claude/list"
 	"github.com/christianhturner/go-claude/logger"
 	"github.com/christianhturner/go-claude/tui/constants"
 )

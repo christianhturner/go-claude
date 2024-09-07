@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	cliui "github.com/christianhturner/go-claude/cli-ui"
-	"github.com/christianhturner/go-claude/go_claude_list"
+	"github.com/christianhturner/go-claude/list"
 	"github.com/christianhturner/go-claude/logger"
 	"github.com/spf13/cobra"
 )
@@ -60,7 +60,7 @@ var listMessagesCmd = &cobra.Command{
 // go-claude
 
 func cliRunListConversationsFunction(cmd *cobra.Command, args []string) {
-	conv, err := go_claude_list.GetAllConversations()
+	conv, err := list.GetAllConversations()
 	if err != nil {
 		logger.FatalError(err, "Error getting conversations")
 	}
@@ -69,5 +69,5 @@ func cliRunListConversationsFunction(cmd *cobra.Command, args []string) {
 
 func cliRunListMessagesFunction(cmd *cobra.Command, args []string) {
 	conversationId := cliui.PromptForConversationId()
-	go_claude_list.ShowMessageList(conversationId)
+	list.ShowMessageList(conversationId)
 }

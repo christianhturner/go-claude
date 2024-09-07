@@ -1,4 +1,4 @@
-package go_claude_list
+package list
 
 import (
 	"fmt"

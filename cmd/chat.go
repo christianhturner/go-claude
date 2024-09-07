@@ -51,7 +51,7 @@ var chatCmd = &cobra.Command{
 			}
 			if promptShowHistory {
 				displayAmount, messagePairs := cliui.PromptHistoricMessagePairs(conversationId)
-				cliui.PresentHistoricMessagePairs(displayAmount, messagePairs)
+				cliui.ShowHistoricMessagePairs(displayAmount, messagePairs)
 			}
 		}
 

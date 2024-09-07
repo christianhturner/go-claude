@@ -17,8 +17,8 @@ var (
 
 // InitLogger initializes the global logger instance.
 // It should be called once at the beginning of the program.
-func InitLogger() {
-	logger, err := initZap()
+func InitLogger(enableConsoleLogging bool) {
+	logger, err := initZap(enableConsoleLogging)
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
 		os.Exit(1)
@@ -56,7 +56,7 @@ func Fatal(args ...interface{}) {
 	sugar.Fatal(args...)
 }
 
-func initZap() (*zap.Logger, error) {
+func initZap(enableConsoleLogging bool) (*zap.Logger, error) {
 	viper := viper.GetViper()
 	configDir := viper.GetString("data_dir")
 	logFile := filepath.Join(configDir, "go-claude.log")
@@ -81,10 +81,18 @@ func initZap() (*zap.Logger, error) {
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	consoleEncoder := zapcore.NewConsoleEncoder(config)
 
-	core := zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, zapcore.AddSync(f), level),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
-	)
+	var core zapcore.Core
+
+	if enableConsoleLogging {
+		core = zapcore.NewTee(
+			zapcore.NewCore(fileEncoder, zapcore.AddSync(f), level),
+			zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
+		)
+	} else {
+		core = zapcore.NewTee(
+			zapcore.NewCore(fileEncoder, zapcore.AddSync(f), level),
+		)
+	}
 
 	logger := zap.New(core)
 	return logger, nil
